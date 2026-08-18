@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 
 import websocket as _ws
 
-TIERS = (0.50, 0.75, 1.00, 1.50, 2.00)
+TIERS = (1.00, 1.50, 2.00)
 STATE = "state.json"
 NTFY_TOPIC = os.environ["NTFY_TOPIC"]
 NTFY_URL = os.environ.get("NTFY_URL", "https://ntfy.sh")
