@@ -134,6 +134,92 @@ def load_state():
         return {}
 
 
+# ── fair value premium ────────────────────────────────────────────────────────
+# Ported from daily_levels.py measured_fv(). A hardcoded ES_FV was 22.89 against
+# a real basis of 7.32 on 2026-09-04: the premium decays into expiry and jumps
+# at every quarterly roll, so any constant is wrong within weeks.
+NET_CARRY = 0.035   # risk-free (~4.5%) minus dividend yield (~1.0%), fallback only
+
+
+def es_front_expiry(today=None):
+    """3rd Friday of the front Mar/Jun/Sep/Dec quarter. Survives contract rolls."""
+    today = today or dt.date.today()
+    for yr_offset in range(3):
+        yr = today.year + yr_offset
+        for m in (3, 6, 9, 12):
+            if yr == today.year and m < today.month:
+                continue
+            first = dt.date(yr, m, 1)
+            first_fri = first + dt.timedelta(days=(4 - first.weekday()) % 7)
+            third_fri = first_fri + dt.timedelta(weeks=2)
+            if third_fri >= today:
+                return third_fri
+    return dt.date(today.year + 1, 3, 21)
+
+
+def es_tv_symbol(expiry):
+    return "CME_MINI:ES%s%d" % ({3: "H", 6: "M", 9: "U", 12: "Z"}[expiry.month],
+                                expiry.year)
+
+
+def _med(xs):
+    s = sorted(xs)
+    return s[len(s) // 2] if len(s) % 2 else (s[len(s) // 2 - 1] + s[len(s) // 2]) / 2
+
+
+def measured_fv(cash_bars, slots=24):
+    """Basis measured as ES minus the SPX500 feed, off matched 5m bars.
+
+    Measured against SPX500 and NOT SP:SPX on purpose. The alert reports
+    px + fv where px is the SPX500 close, so the fv that makes that arithmetic
+    correct is ES minus SPX500. The CFD sits ~1.8pts above cash SPX, so the
+    9.10 that daily_levels measures against SP:SPX would overstate ES here.
+    SP:SPX is also unusable overnight: it prints flat repeated bars, which is
+    the unmatched-timestamp mistake wearing a timestamp.
+
+    Returns (fv, note) or (None, reason).
+    """
+    expiry = es_front_expiry()
+    es, err = tv_history(tf="5", bars=400, symbol=es_tv_symbol(expiry), timeout=30)
+    if not es:
+        return None, f"no ES bars for {es_tv_symbol(expiry)}: {err[:1]}"
+
+    cash_by_t = {b["t"]: b for b in cash_bars if b["h"] != b["l"]}
+    basis = [b["c"] - cash_by_t[b["t"]]["c"]
+             for b in sorted(es, key=lambda x: x["t"]) if b["t"] in cash_by_t]
+    if len(basis) < slots:
+        return None, f"only {len(basis)} matched live slots"
+
+    # The last bar of a cash session reads 3-5pts wide because ES keeps trading.
+    # Median first, then drop anything more than 1.5pts off it.
+    tail = basis[-slots:]
+    m0 = _med(tail)
+    keep = [b for b in tail if abs(b - m0) <= 1.5]
+    if len(keep) < slots // 2:
+        return None, f"basis unstable, only {len(keep)}/{len(tail)} slots agree"
+    fv = _med(keep)
+    if not (0 < fv < 120):
+        return None, f"implausible basis {fv:.2f}"
+    return fv, f"measured, median of {len(keep)}/{len(tail)} matched 5m slots"
+
+
+def fair_value_premium(cash_bars, spx_price):
+    """measured -> modelled -> ES_FV env var. Never raises: a wrong ES number in
+    the body must not swallow the gap alert itself."""
+    try:
+        fv, note = measured_fv(cash_bars)
+    except Exception as e:
+        fv, note = None, f"measure raised: {e}"
+    if fv is not None:
+        return fv, note
+    days = (es_front_expiry() - dt.date.today()).days
+    modelled = spx_price * NET_CARRY * days / 365
+    if 0 < modelled < 120:
+        return modelled, f"modelled from NET_CARRY over {days}d ({note})"
+    env = float(os.environ.get("ES_FV", "0") or 0)
+    return env, f"fell back to ES_FV env ({note})"
+
+
 def main():
     et = dt.datetime.now(ET)
     print(f"ET now {et:%Y-%m-%d %H:%M} ({et:%a})")
@@ -179,7 +265,8 @@ def main():
         tier = max(hit)
         st["fired"] = sorted(set(st["fired"]) | {t for t in TIERS if abs(pct) >= t})
         direction = "UP" if pct > 0 else "DOWN"
-        fv = float(os.environ.get("ES_FV", "0") or 0)
+        fv, fv_note = fair_value_premium(bars, px)
+        print(f"fv {fv:.2f}pts ({fv_note})")
         body = (f"SPX {px:.0f} (ES {px + fv:.0f}) is {direction} {abs(pct):.2f}% "
                 f"({abs(px - ref):.0f} pts) from the {sess} cash close "
                 f"SPX {ref:.0f} (ES {ref + fv:.0f}).")
