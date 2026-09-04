@@ -21,7 +21,6 @@ jobs:
       - name: check
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          ES_FV: '22.89'
         run: python overnight_alert.py
       - name: persist state
         run: |
