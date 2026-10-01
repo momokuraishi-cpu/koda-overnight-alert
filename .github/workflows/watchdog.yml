@@ -8,6 +8,11 @@ on:
     # Actions cron is UTC and DST-naive while the builder runs on Amsterdam time.
     - cron: '*/30 * * * *'
   workflow_dispatch:
+    inputs:
+      test:
+        description: 'Fire a test notification instead of checking'
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -26,6 +31,7 @@ jobs:
       - name: watchdog
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          WATCHDOG_TEST: ${{ inputs.test }}
         run: python watchdog.py
       - name: persist state
         if: always()
