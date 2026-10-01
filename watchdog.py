@@ -79,6 +79,18 @@ def _mark(state, key, now):
 
 def main():
     now = dt.datetime.now(AMS)
+
+    # Self-test path. An alert channel nobody has ever fired is not a channel,
+    # it is an assumption. `gh workflow run dashboard-watchdog -f test=true`,
+    # or the Run workflow button, proves the whole path to the phone.
+    if os.environ.get("WATCHDOG_TEST") == "true":
+        _notify("Dashboard watchdog: TEST",
+                f"Self-test fired {now:%a %d %b %H:%M} Amsterdam.\n"
+                "If you are reading this, the off-Mac alert path works.",
+                priority="default", tags="white_check_mark")
+        print("test notification sent")
+        return
+
     state = _load()
     faults = []
 
