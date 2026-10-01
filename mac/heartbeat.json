@@ -1,0 +1,17 @@
+{
+  "ts_utc": "2026-10-01T09:30:32.525060+00:00",
+  "faults": [],
+  "plists": 20,
+  "unloaded": 0,
+  "quarantined": 0,
+  "disabled_on_purpose": [
+    "com.koda.health",
+    "com.koda.health.food",
+    "com.koda.icloud-photos-backup",
+    "com.koda.iphone-newphotos-backup"
+  ],
+  "ports": {
+    "8765": "price server",
+    "8080": "WhatsApp bridge"
+  }
+}
