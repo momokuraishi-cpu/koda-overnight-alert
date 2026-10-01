@@ -32,6 +32,11 @@ MAX_AGE_H = 14
 RENOTIFY_H = 6          # do not re-nag about the same fault more often than this
 MIN_BYTES = 40_000      # a blank/degraded build is much smaller than the ~80KB real one
 
+# The Mac's own health report, pushed by ~/.claude/scripts/agent_health.py hourly.
+# The Mac observes (only it can see localhost:8080); the cloud decides and alerts.
+HEARTBEAT = "mac/heartbeat.json"
+HB_MAX_AGE_H = 4        # hourly writer + tolerance for the Mac sleeping briefly
+
 
 def _get(url, timeout=25):
     req = urllib.request.Request(
@@ -133,6 +138,37 @@ def main():
                     "The Mac's launchd agents are probably not loaded. Check:\n"
                     "  launchctl list | grep -i koda\n"
                     "  xattr -l ~/Library/LaunchAgents/*.plist | grep -c quarantine"))
+
+    # 3. What does the Mac itself report? This is the half the page cannot show:
+    #    unloaded agents, and a dead WhatsApp bridge on localhost:8080.
+    try:
+        hb = json.load(open(HEARTBEAT))
+    except FileNotFoundError:
+        hb = None
+    except Exception as e:
+        faults.append(("hb_unreadable", f"Heartbeat file unparseable: {type(e).__name__}: {e}"))
+        hb = None
+
+    if hb is not None:
+        hb_faults = hb.get("faults") or []
+        if hb_faults:
+            faults.append(("mac_faults",
+                            "The Mac is reporting its own faults:\n\n"
+                            + "\n\n".join(hb_faults)))
+        try:
+            ts = dt.datetime.fromisoformat(hb["ts_utc"])
+            age_h = (dt.datetime.now(dt.timezone.utc) - ts).total_seconds() / 3600
+            state["heartbeat_age_h"] = round(age_h, 2)
+            # Same gating logic as the build stamp: only judge when the Mac is
+            # expected to be awake, so overnight sleep is not a false positive.
+            if now.weekday() <= 4 and 8 <= now.hour < 23 and age_h > HB_MAX_AGE_H:
+                faults.append((
+                    "hb_stale",
+                    f"No health report from the Mac in {age_h:.1f}h "
+                    f"(expected hourly). Either it is off/asleep during working "
+                    f"hours, or com.koda.agent-health is not loaded."))
+        except Exception as e:
+            faults.append(("hb_nots", f"Heartbeat has no usable ts_utc: {e}"))
 
     state["last_run"] = now.isoformat()
     state["last_status"] = "fault" if faults else "ok"
