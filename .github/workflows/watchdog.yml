@@ -1,0 +1,42 @@
+name: dashboard-watchdog
+# Deliberately runs on GitHub Actions, never on the Mac. On 2026-09-30 every
+# on-Mac monitor died together with the jobs it was monitoring, so the watchdog
+# must not share fate with the watched.
+on:
+  schedule:
+    # Every 30 min. The weekday/hour gate lives in Python, not here, because
+    # Actions cron is UTC and DST-naive while the builder runs on Amsterdam time.
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  # Shared with overnight-gap on purpose: both commit state to this repo, and
+  # a shared group serializes them so they cannot race on git push.
+  group: overnight-gap
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: watchdog
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python watchdog.py
+      - name: persist state
+        if: always()
+        run: |
+          git config user.name  "koda-bot"
+          git config user.email "koda-bot@users.noreply.github.com"
+          git add -A watchdog_state.json
+          git diff --cached --quiet && echo "no state change" && exit 0
+          git commit -m "watchdog state: $(date -u +%FT%TZ)"
+          for i in 1 2 3; do
+            git pull --rebase --autostash -q && git push -q && exit 0
+            sleep 5
+          done
+          echo "state push failed" >&2; exit 1
