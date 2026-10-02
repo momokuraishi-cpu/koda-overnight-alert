@@ -1,5 +1,5 @@
 {
-  "ts_utc": "2026-10-02T15:20:42.447895+00:00",
+  "ts_utc": "2026-10-02T16:20:44.235776+00:00",
   "faults": [],
   "plists": 20,
   "unloaded": 0,
@@ -7,8 +7,7 @@
   "disabled_on_purpose": [
     "com.koda.health",
     "com.koda.health.food",
-    "com.koda.icloud-photos-backup",
-    "com.koda.iphone-newphotos-backup"
+    "com.koda.icloud-photos-backup"
   ],
   "ports": {
     "8765": "price server",
