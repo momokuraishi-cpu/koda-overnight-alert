@@ -1,8 +1,8 @@
 {
-  "heartbeat_age_h": 5.01,
-  "last_age_h": 11.62,
+  "heartbeat_age_h": 0.45,
+  "last_age_h": 13.8,
   "last_alert": {},
-  "last_run": "2026-10-17T18:50:02.701712+02:00",
+  "last_run": "2026-10-17T21:00:55.330953+02:00",
   "last_seen_build": "2026-10-17T07:13:00+02:00",
   "last_status": "ok"
 }
