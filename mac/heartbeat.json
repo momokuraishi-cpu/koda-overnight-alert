@@ -1,6 +1,8 @@
 {
-  "ts_utc": "2026-10-22T12:48:36.615589+00:00",
-  "faults": [],
+  "ts_utc": "2026-10-22T13:48:43.608230+00:00",
+  "faults": [
+    "price server not listening on :8765 (TimeoutError)"
+  ],
   "plists": 20,
   "unloaded": 0,
   "quarantined": 0,
