@@ -1,8 +1,6 @@
 {
-  "ts_utc": "2026-10-23T14:28:10.749761+00:00",
-  "faults": [
-    "WhatsApp bridge disconnected and self-repair FAILED.\n  bridge is up but has no WhatsApp session\n  tried: restarted the managed bridge\n  alerts are falling back to ntfy + email."
-  ],
+  "ts_utc": "2026-10-23T14:29:42.105938+00:00",
+  "faults": [],
   "plists": 20,
   "unloaded": 0,
   "quarantined": 0,
