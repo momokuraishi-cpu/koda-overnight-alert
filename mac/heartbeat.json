@@ -1,9 +1,8 @@
 {
-  "ts_utc": "2026-10-23T14:21:05.413830+00:00",
+  "ts_utc": "2026-10-23T14:21:26.080123+00:00",
   "faults": [
     "Agents on disk but NOT loaded:\n  com.malkuraishi.whatsapp-bridge",
-    "WhatsApp bridge not listening on :8080 (URLError)",
-    "WhatsApp bridge down and self-repair FAILED.\n  bridge not answering on :8080 (URLError)\n  tried: restarted the bridge via launchd\n  alerts are falling back to ntfy + email."
+    "WhatsApp bridge not listening on :8080 (URLError)"
   ],
   "plists": 20,
   "unloaded": 1,
