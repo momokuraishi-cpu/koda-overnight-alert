@@ -1,11 +1,8 @@
 {
-  "ts_utc": "2026-10-23T14:21:26.080123+00:00",
-  "faults": [
-    "Agents on disk but NOT loaded:\n  com.malkuraishi.whatsapp-bridge",
-    "WhatsApp bridge not listening on :8080 (URLError)"
-  ],
+  "ts_utc": "2026-10-23T14:22:03.223278+00:00",
+  "faults": [],
   "plists": 20,
-  "unloaded": 1,
+  "unloaded": 0,
   "quarantined": 0,
   "disabled_on_purpose": [
     "com.koda.health",
