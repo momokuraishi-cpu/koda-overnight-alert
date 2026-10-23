@@ -30,6 +30,17 @@ AMS = ZoneInfo("Europe/Amsterdam")
 # on the legitimate weekend gap.
 MAX_AGE_H = 14
 RENOTIFY_H = 6          # do not re-nag about the same fault more often than this
+DIGEST_HOUR = 8         # ONE digest per day, 08:00 Europe/Amsterdam
+
+# Mo, 2026-10-23: "do you think its useful for me to know that the thing didnt
+# fucking work every 2 min? or is it more useful for you to figure out how shit
+# is breaking and self fix. and if it doesnt get resolved to maybe alert me once
+# in the morning or evening?"
+#
+# So the Mac self-heals silently and pages only for time-critical faults during
+# the US cash session. Everything else waits for one digest a day, sent from
+# HERE: the Mac sleeps so it cannot honour a fixed hour, and the Mac is also the
+# thing that may be broken.
 MIN_BYTES = 40_000      # a blank/degraded build is much smaller than the ~80KB real one
 
 # The Mac's own health report, pushed by ~/.claude/scripts/agent_health.py hourly.
@@ -149,12 +160,10 @@ def main():
         faults.append(("hb_unreadable", f"Heartbeat file unparseable: {type(e).__name__}: {e}"))
         hb = None
 
+    mac_faults = []
     if hb is not None:
-        hb_faults = hb.get("faults") or []
-        if hb_faults:
-            faults.append(("mac_faults",
-                            "The Mac is reporting its own faults:\n\n"
-                            + "\n\n".join(hb_faults)))
+        mac_faults = hb.get("faults") or []
+        state["mac_fault_ids"] = hb.get("fault_ids") or []
         try:
             ts = dt.datetime.fromisoformat(hb["ts_utc"])
             age_h = (dt.datetime.now(dt.timezone.utc) - ts).total_seconds() / 3600
@@ -172,6 +181,21 @@ def main():
 
     state["last_run"] = now.isoformat()
     state["last_status"] = "fault" if faults else "ok"
+
+    # ---- one digest a day, carrying everything still open -----------------
+    today = now.date().isoformat()
+    if now.hour >= DIGEST_HOUR and state.get("last_digest") != today:
+        lines = [m for _, m in faults] + list(mac_faults)
+        if lines:
+            body = (f"{len(lines)} open issue(s) as of {now:%a %d %b %H:%M}:\n\n"
+                    + "\n\n".join(lines))
+            _notify(f"Koda daily: {len(lines)} open issue(s)", body,
+                    priority="default", tags="clipboard")
+            print(f"DIGEST sent: {len(lines)} issue(s)")
+        else:
+            print("digest hour reached, nothing open -- staying quiet")
+        state["last_digest"] = today
+        faults = []   # the digest spoke for these; do not also nag per fault
 
     for key, msg in faults:
         if _should_notify(state, key, now):
