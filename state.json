@@ -1,6 +1,8 @@
 {
  "session": "2026-10-29",
  "ref": 7720.23,
- "fired": [],
+ "fired": [
+  1.0
+ ],
  "blind_notified": false
 }
