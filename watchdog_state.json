@@ -1,10 +1,10 @@
 {
-  "heartbeat_age_h": 0.67,
-  "last_age_h": 7.34,
+  "heartbeat_age_h": 0.5,
+  "last_age_h": 1.14,
   "last_alert": {},
   "last_digest": "2026-11-04",
-  "last_run": "2026-11-04T16:04:08.965782+01:00",
-  "last_seen_build": "2026-11-04T08:44:00+01:00",
+  "last_run": "2026-11-04T22:23:29.686178+01:00",
+  "last_seen_build": "2026-11-04T21:15:00+01:00",
   "last_status": "ok",
   "mac_fault_ids": []
 }
