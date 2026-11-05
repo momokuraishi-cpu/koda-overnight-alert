@@ -1,7 +1,11 @@
 {
-  "ts_utc": "2026-11-05T16:54:25.419845+00:00",
-  "faults": [],
-  "fault_ids": [],
+  "ts_utc": "2026-11-05T20:41:05.821739+00:00",
+  "faults": [
+    "price server not listening on :8765 (TimeoutError)"
+  ],
+  "fault_ids": [
+    "port.down:8765"
+  ],
   "plists": 20,
   "unloaded": 0,
   "quarantined": 0,
