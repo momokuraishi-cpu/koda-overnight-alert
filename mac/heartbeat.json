@@ -1,9 +1,15 @@
 {
-  "ts_utc": "2026-11-25T12:56:39.454692+00:00",
-  "faults": [],
-  "fault_ids": [],
+  "ts_utc": "2026-11-25T13:56:41.309358+00:00",
+  "faults": [
+    "Agents on disk but NOT loaded:\n  com.koda.price-server",
+    "price server not listening on :8765 (URLError)"
+  ],
+  "fault_ids": [
+    "launchd.unloaded:com.koda.price-server",
+    "port.down:8765"
+  ],
   "plists": 20,
-  "unloaded": 0,
+  "unloaded": 1,
   "quarantined": 0,
   "disabled_on_purpose": [
     "com.koda.health",
