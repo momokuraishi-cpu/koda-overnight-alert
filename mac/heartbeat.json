@@ -1,5 +1,5 @@
 {
-  "ts_utc": "2026-11-25T13:56:41.309358+00:00",
+  "ts_utc": "2026-11-25T14:56:44.379497+00:00",
   "faults": [
     "Agents on disk but NOT loaded:\n  com.koda.price-server",
     "price server not listening on :8765 (URLError)"
